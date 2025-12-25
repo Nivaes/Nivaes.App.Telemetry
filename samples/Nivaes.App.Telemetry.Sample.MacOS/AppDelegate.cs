@@ -1,16 +1,14 @@
 using System.Runtime.InteropServices;
-using Foundation;
-using Microsoft.Extensions.Options;
+using MapKit;
 using ObjCRuntime;
-using UIKit;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace Nivaes.App.Telemetry.Sample.iOS
+namespace Nivaes.App.Telemetry.Sample.MacOS
 {
     [Register("AppDelegate")]
-    public class AppDelegate : UIApplicationDelegate
+    public class AppDelegate : NSApplicationDelegate
     {
-        public override bool FinishedLaunching(UIApplication application, NSDictionary? launchOptions)
+        public override void DidFinishLaunching(NSNotification notification)
         {
             NSSetUncaughtExceptionHandler(NativeUncaughtExceptionHandler);
 
@@ -26,10 +24,7 @@ namespace Nivaes.App.Telemetry.Sample.iOS
                 e.SetObserved();
             };
 
-            return base.FinishedLaunching(application, launchOptions);
-
-            //// Override point for customization after application launch.
-            //return true;
+            base.DidFinishLaunching(notification);
         }
 
         // P/Invoke for Objective-C NSSetUncaughtExceptionHandler
@@ -60,19 +55,10 @@ namespace Nivaes.App.Telemetry.Sample.iOS
             }
         }
 
-        public override UISceneConfiguration GetConfiguration(UIApplication application, UISceneSession connectingSceneSession, UISceneConnectionOptions options)
-        {
-            // Called when a new scene session is being created.
-            // Use this method to select a configuration to create the new scene with.
-            // "Default Configuration" is defined in the Info.plist's 'UISceneConfigurationName' key.
-            return new UISceneConfiguration("Default Configuration", connectingSceneSession.Role);
-        }
 
-        public override void DidDiscardSceneSessions(UIApplication application, NSSet<UISceneSession> sceneSessions)
+        public override void WillTerminate(NSNotification notification)
         {
-            // Called when the user discards a scene session.
-            // If any sessions were discarded while the application was not running, this will be called shortly after 'FinishedLaunching'.
-            // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
+            // Insert code here to tear down your application
         }
     }
 }
