@@ -10,6 +10,7 @@
     <Project Path="samples/Nivaes.App.Telemetry.Sample.iOS/Nivaes.App.Telemetry.Sample.iOS.csproj" Id="8d34ae08-2c3e-4ad3-ac90-db9efbe3c7d3">
       <Deploy />
     </Project>
+    <Project Path="samples/Nivaes.App.Telemetry.Sample.MacOS/Nivaes.App.Telemetry.Sample.MacOS.csproj" Id="a87fae85-677f-4758-9002-ec97a64f0c16" />
     <Project Path="samples/Nivaes.App.Telemetry.Sample.WinUI3/Nivaes.App.Telemetry.Sample.WinUI3.csproj" Id="fe10840d-2ea4-47d6-9f36-28bd7917b21d">
       <Platform Project="x64" />
       <Deploy />
