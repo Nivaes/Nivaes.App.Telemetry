@@ -1,5 +1,7 @@
 <Solution>
-  <Folder Name="/Docs/" />
+  <Folder Name="/Docs/">
+    <File Path="Instalacion.md" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/Nivaes.App.Telemetry.Sample.WinUI3/Nivaes.App.Telemetry.Sample.WinUI3.csproj" Id="fe10840d-2ea4-47d6-9f36-28bd7917b21d">
       <Platform Project="x64" />
