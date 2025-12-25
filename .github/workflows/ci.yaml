@@ -1,0 +1,354 @@
+name: CI
+
+on:
+  push:
+    branches-ignore:
+    - 'release/v**'
+    paths-ignore:
+    - '**/*.md'
+    - '**/*.sln'
+  pull_request:
+    #types: [opened, synchronize, reopened]
+    types: [synchronize]
+    paths-ignore:
+    - '**/*.md'
+    - '**/*.sln'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build-app-cross:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: ./global.json
+    #     source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+    #   env:
+    #     NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+    - name: Install workload
+      run: |
+        dotnet workload install android
+
+    - name: Restore Dependencies
+      run: |
+          dotnet restore sources/Nivaes.App.Cross.SourceGenerator --configfile .github/NuGet.config
+          dotnet restore sources/Nivaes.App.Cross --configfile .github/NuGet.config
+      env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: bash
+
+    - name: Build
+      run: |
+          dotnet build sources/Nivaes.App.Cross.SourceGenerator --configuration Release --no-restore
+          dotnet build sources/Nivaes.App.Cross --configuration Release --property:RunAOTAnalysis=true --no-restore
+
+    - name: Test
+      run: |
+          dotnet test sources/Nivaes.App.Cross.SourceGenerator --configuration Release --no-build --verbosity normal --no-restore
+          dotnet test sources/Nivaes.App.Cross --configuration Release --no-build --verbosity normal --no-restore
+          
+    - name: Check-AotCompatible
+      run: |
+          dotnet publish sources/Nivaes.App.Cross --property:RunAOTAnalysis=true --framework net10.0 --configuration Release --no-restore --no-build
+
+  build-app-cross-android:
+    needs: build-app-cross
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: ./global.json
+
+    - name: Install workload
+      run: |
+        dotnet workload install android
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Restore Dependencies
+      run: |
+          dotnet restore sources/Nivaes.App.Cross.Droid.SourceGenerator --configfile .github/NuGet.config
+          dotnet restore sources/Nivaes.App.Cross.Droid --configfile .github/NuGet.config
+      env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build
+      run: |
+          dotnet build sources/Nivaes.App.Cross.Droid.SourceGenerator --configuration Release --no-restore
+          dotnet build sources/Nivaes.App.Cross.Droid --configuration Release --no-restore
+          
+    - name: Test
+      run: |
+          dotnet test sources/Nivaes.App.Cross.Droid --configuration Release --no-build --verbosity normal --no-restore
+             
+  build-app-cross-android-sample:
+    needs: build-app-cross-android
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: ./global.json
+
+    - name: Install workload
+      run: |
+        dotnet workload install android
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Restore Dependencies
+      run: |
+          dotnet restore sources/Nivaes.App.Cross.Droid.SourceGenerator --configfile .github/NuGet.config
+          dotnet restore sources/Nivaes.App.Cross.Droid --configfile .github/NuGet.config --runtime android-x64
+          dotnet restore sources/Nivaes.App.Cross.Droid --configfile .github/NuGet.config --runtime android-arm64
+          dotnet restore samples/Nivaes.App.Cross.Sample.Droid --configfile .github/NuGet.config --runtime android-x64
+          dotnet restore samples/Nivaes.App.Cross.Sample.Droid --configfile .github/NuGet.config --runtime android-arm64
+      env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                   
+    - name: Build
+      run: |
+          dotnet build samples/Nivaes.App.Cross.Sample.Droid \
+            --property:AndroidEnableProfiledAot=false \
+            --property:AndroidUseLLVM=true \
+            --property:AndroidPackageFormat=aab \
+            --configuration Release \
+            --no-restore 
+
+    - name: publish
+      run: |
+        dotnet publish samples/Nivaes.App.Cross.Sample.Droid \
+            --property:AndroidPackageFormat=aab \
+            --property:PublushTrimmed=true \
+            --property:AndroidUseLLVM=true \
+            --property:AndroidEnableProfiledAot=false \
+            --configuration Release \
+            --no-restore --no-build
+
+  build-app-cross-ios:
+    needs: build-app-cross
+    runs-on: macos-latest
+
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: ./global.json
+
+    - name: Install workload
+      run: |
+        dotnet workload install android ios maccatalyst macos tvos
+
+    - name: Restore Dependencies
+      run: |
+          dotnet restore sources/Nivaes.App.Cross.UIKit --configfile .github/NuGet.config
+          dotnet restore sources/Nivaes.App.Cross.UIKit.SourceGenerator --configfile .github/NuGet.config
+      env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build
+      run: |
+          dotnet build sources/Nivaes.App.Cross.UIKit --property:RunAOTAnalysis=true --configuration Release --no-restore
+          dotnet build sources/Nivaes.App.Cross.UIKit.SourceGenerator --configuration Release --no-restore
+
+    - name: Test
+      run: |
+          dotnet test sources/Nivaes.App.Cross.UIKit --configuration Release --no-build --verbosity normal --no-restore
+          dotnet test sources/Nivaes.App.Cross.UIKit.SourceGenerator --configuration Release --no-build --verbosity normal --no-restore
+
+  build-app-cross-ios-samples:
+    needs: build-app-cross-ios
+    runs-on: macos-latest
+
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: ./global.json
+
+    - name: Update xcode
+      run: |
+        xcodes install 26.1
+        xcodes select 26.1
+
+    - name: Install workload
+      run: |
+        dotnet workload install android ios maccatalyst macos tvos
+
+    - name: Restore Dependencies
+      run: |
+          dotnet restore sources/Nivaes.App.Cross.UIKit --configfile .github/NuGet.config
+          dotnet restore sources/Nivaes.App.Cross.UIKit.SourceGenerator --configfile .github/NuGet.config
+          dotnet restore samples/Nivaes.App.Cross.Sample.UIKit --configfile .github/NuGet.config
+          dotnet restore samples/Nivaes.App.Cross.Sample.UIKit.iOS --configfile .github/NuGet.config
+          dotnet restore samples/Nivaes.App.Cross.Sample.UIKit.MacCatalyst --configfile .github/NuGet.config
+      env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build
+      run: |
+          dotnet build samples/Nivaes.App.Cross.Sample.UIKit --property:RunAOTAnalysis=true --configuration Release --verbosity normal --no-restore
+          dotnet build samples/Nivaes.App.Cross.Sample.UIKit.iOS --property:RunAOTAnalysis=true --configuration Release --verbosity normal --no-restore
+          dotnet build samples/Nivaes.App.Cross.Sample.UIKit.MacCatalyst --property:RunAOTAnalysis=true --configuration Release --verbosity normal --no-restore
+
+    - name: publish
+      run: |
+          dotnet publish samples/Nivaes.App.Cross.Sample.UIKit.iOS --property:ArchiveOnBuild=true --property:RuntimeIdentifier=ios-arm64 --configuration Release --no-restore --no-build --verbosity normal
+          # dotnet publish samples/Nivaes.App.Cross.Sample.UIKit.iOS --property:RunAOTAnalysis=true --property:RuntimeIdentifier=ios-arm64 --configuration Release --no-restore --verbosity normal
+          # dotnet publish samples/Nivaes.App.Cross.Sample.UIKit.MacCatalyst --property:RunAOTAnalysis=true --configuration Release --no-restore --verbosity normal
+
+    - name: publish2
+      run: |
+          dotnet publish samples/Nivaes.App.Cross.Sample.UIKit.MacCatalyst --property:ArchiveOnBuild=true --property:RuntimeIdentifier=ios-arm64 --configuration Release --no-restore --no-build --verbosity normal
+
+
+  build-app-cross-WinUI3:
+    needs: build-app-cross
+    runs-on: windows-latest
+
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: ./global.json
+
+    - name: Install workload
+      run: |
+        dotnet workload install android ios maccatalyst macos tvos
+
+    - name: Restore Dependencies
+      run: |
+          dotnet restore sources/Nivaes.App.Cross.WinUI3 --configfile .github/NuGet.config
+          dotnet restore sources/Nivaes.App.Cross.WinUI3.SourceGenerator --configfile .github/NuGet.config
+          dotnet restore samples/Nivaes.App.Cross.Sample.WinUI3 --configfile .github/NuGet.config
+      env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build
+      run: |
+          dotnet build sources/Nivaes.App.Cross.WinUI3 --property:RunAOTAnalysis=true --configuration Release --no-restore
+          dotnet build sources/Nivaes.App.Cross.WinUI3.SourceGenerator --configuration Release --no-restore
+
+    - name: Test
+      run: |
+          dotnet test sources/Nivaes.App.Cross.WinUI3 --configuration Release --no-build --verbosity normal --no-restore
+          dotnet test sources/Nivaes.App.Cross.WinUI3.SourceGenerator --configuration Release --no-build --verbosity normal --no-restore
+
+  build-app-cross-WinUI3-samples:
+    needs: build-app-cross-WinUI3
+    runs-on: windows-latest
+
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v5
+      with:
+        global-json-file: ./global.json
+
+    - name: Install workload
+      run: |
+        dotnet workload install android ios maccatalyst macos tvos
+
+    - name: Restore Dependencies
+      run: |
+          dotnet restore sources/Nivaes.App.Cross.WinUI3 --configfile .github/NuGet.config
+          dotnet restore sources/Nivaes.App.Cross.WinUI3.SourceGenerator --configfile .github/NuGet.config
+          dotnet restore samples/Nivaes.App.Cross.Sample.WinUI3 --configfile .github/NuGet.config
+      env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build
+      run: |
+          dotnet build samples/Nivaes.App.Cross.Sample.WinUI3 --property:RunAOTAnalysis=true --configuration Release --no-restore --verbosity normal
+
+    - name: publish
+      run: |
+          dotnet publish samples/Nivaes.App.Cross.Sample.WinUI3 \
+            --framework:net10.0-windows10.0.19041.0 \
+            --property:RunAOTAnalysis=true \
+            --property:GenerateAppxPackageOnBuild=true \
+            --property:AppxPackageDir=bin\Release\ \
+            --property:AppxBundle=Always \
+            --property:AppxBundlePlatforms="x86|x64|arm64" \
+            --configuration Release \
+            --no-restore --no-build --verbosity normal
