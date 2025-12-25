@@ -39,9 +39,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
-  <!--<ItemGroup>
-    <PackageReference Include="Microsoft.UI.Xaml" />
-  </ItemGroup>-->
   <ItemGroup>
     <ProjectReference Include="..\..\sources\Nivaes.App.Telemetry\Nivaes.App.Telemetry.csproj" />
   </ItemGroup>

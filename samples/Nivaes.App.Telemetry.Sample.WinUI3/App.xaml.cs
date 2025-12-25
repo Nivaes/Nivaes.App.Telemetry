@@ -35,6 +35,18 @@ namespace Nivaes.App.Telemetry.Sample.WinUI3
         public App()
         {
             InitializeComponent();
+
+            TelemetryBootstrap.Init(
+                   "Nivaes.App",
+                   "http://localhost:4317");
+
+            TelemetryExceptionHandler.RegisterGlobalHandlers("WinUI");
+
+            this.UnhandledException += (s, e) =>
+            {
+                TelemetryExceptionHandler.RecordFatal(
+                    e.Exception, "WinUI.UIThread");
+            };
         }
 
         /// <summary>

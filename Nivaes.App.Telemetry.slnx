@@ -3,11 +3,17 @@
     <File Path="Instalacion.md" />
   </Folder>
   <Folder Name="/samples/">
+    <Project Path="samples/Nivaes.App.Telemetry.Sample.Console/Nivaes.App.Telemetry.Sample.Console.csproj" Id="9d6da6c1-2d68-4c87-9e39-796e15eea569" />
+    <Project Path="samples/Nivaes.App.Telemetry.Sample.Droid/Nivaes.App.Telemetry.Sample.Droid.csproj" Id="60f3ec18-6da0-4948-b764-ba249483ec09">
+      <Deploy />
+    </Project>
+    <Project Path="samples/Nivaes.App.Telemetry.Sample.iOS/Nivaes.App.Telemetry.Sample.iOS.csproj" Id="8d34ae08-2c3e-4ad3-ac90-db9efbe3c7d3">
+      <Deploy />
+    </Project>
     <Project Path="samples/Nivaes.App.Telemetry.Sample.WinUI3/Nivaes.App.Telemetry.Sample.WinUI3.csproj" Id="fe10840d-2ea4-47d6-9f36-28bd7917b21d">
       <Platform Project="x64" />
       <Deploy />
     </Project>
-    <Project Path="samples/Nivaes.App.Telemetry.Sample.Console/Nivaes.App.Telemetry.Sample.Console.csproj" Id="9d6da6c1-2d68-4c87-9e39-796e15eea569" />
   </Folder>
    <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
