@@ -1,8 +1,18 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using System.Diagnostics;
 using Nivaes.App.Telemetry;
 
 Console.WriteLine("Hello, telemetry!");
 
-using var span = TelemetryActivity.Start("Feature.CreateInvoice");
+TelemetryBootstrap.Init("Nivaes.Console", "http://[::1]:4318");
+//TelemetryBootstrap.Init("Nivaes.Console", "http://localhost:31674");
+
+TelemetryExceptionHandler.RegisterGlobalHandlers("Console");
+
+using var span = TelemetryActivity.Start("Console");
+span?.SetTag("clave", "valor");
+span?.AddEvent(new ActivityEvent("Evento"));
+
+
+Task.Delay(1000).Wait();    
 
 Console.WriteLine("End telemetry");

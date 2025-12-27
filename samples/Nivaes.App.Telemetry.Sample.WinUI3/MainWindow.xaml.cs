@@ -27,5 +27,41 @@ namespace Nivaes.App.Telemetry.Sample.WinUI3
         {
             InitializeComponent();
         }
+
+        private void Guardar_Click(object sender, RoutedEventArgs e)
+        {
+            using var span = TelemetryActivity.Start("Guardar_Click");
+
+            string nombre = txtNombre.Text;
+            string apellidos = txtApellidos.Text;
+            string edad = txtEdad.Text;
+            string email = txtEmail.Text;
+
+            // Aquí podrías guardar los datos en base de datos o mostrar un mensaje
+            ContentDialog dialog = new ContentDialog()
+            {
+                Title = "Datos guardados",
+                Content = $"Nombre: {nombre}\nApellidos: {apellidos}\nEdad: {edad}\nEmail: {email}",
+                CloseButtonText = "Ok"
+            };
+
+            _ = dialog.ShowAsync();
+        }
+
+        private void Cancelar_Click(object sender, RoutedEventArgs e)
+        {
+            using var span = TelemetryActivity.Start("Cancelar_Click");
+
+            // Limpiar todos los campos
+            txtNombre.Text = "";
+            txtApellidos.Text = "";
+            txtEdad.Text = "";
+            txtEmail.Text = "";
+        }
+
+        private void Error_Click(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
